@@ -153,9 +153,10 @@ const getAllPendingCollectorsCollectors = async (req, res) => {
       verificationStatus: "Pending",
     }).sort({ createdAt: -1 });;
     if (pendingCollectors.length == 0) {
-      return res.status(404).send({
+      return res.status(200).send({
         success: false,
         message: "No collectors with pending verification status",
+        pendingCollectors:[]
       });
     } else {
       return res.status(200).send({
@@ -177,9 +178,10 @@ const getAllRejectedCollectorsCollectors = async (req, res) => {
       verificationStatus: "Rejected",
     });
     if (rejectedCollectors.length == 0) {
-      return res.status(404).send({
+      return res.status(200).send({
         success: false,
         message: "No collectors with reject verification status",
+        rejectedCollectors:[]
       });
     } else {
       return res.status(200).send({
@@ -201,9 +203,10 @@ const getAllAccepctedCollectorsCollectors = async (req, res) => {
       verificationStatus: "Accepcted",
     });
     if (accepctedCollectors.length == 0) {
-      return res.status(404).send({
+      return res.status(200).send({
         success: false,
         message: "No collectors with accepct verification status",
+        accepctedCollectors:[]
       });
     } else {
       return res.status(200).send({
