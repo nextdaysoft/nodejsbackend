@@ -25,7 +25,7 @@ const updateRequestStatusController = async (req, res) => {
         message: "Request not found",
       });
     }
-
+    console.log(existingRequest);
     const collector = existingRequest.collectorId;
     const user = existingRequest.userId;
     // Update the request status
@@ -35,7 +35,7 @@ const updateRequestStatusController = async (req, res) => {
     // Save the updated request
     const updatedRequest = await existingRequest.save();
 
-    if (newStatus == "Accepcted") {
+    if (newStatus == "Accepted") {
       user.isBooked = true;
       collector.isWorking = true;
       collector.testRunning = requestId;
@@ -120,10 +120,10 @@ const findPendingRequestController = async (req, res) => {
       .json({ success: false, message: "Failed to fetch pending requests" });
   }
 };
-const findAccepctedRequestController = async (req, res) => {
+const findAcceptedRequestController = async (req, res) => {
   try {
-    const accepctedRequests = await Request.find({ status: "Accepted" }); // Find requests with status 'pending'
-    return res.status(200).json({ success: true, accepctedRequests });
+    const acceptedRequests = await Request.find({ status: "Accepted" }); // Find requests with status 'pending'
+    return res.status(200).json({ success: true, acceptedRequests });
   } catch (error) {
     console.error(error);
     return res
@@ -252,12 +252,19 @@ const getAllRequestController = async (req, res) => {
       .json({ success: false, message: "Failed to fetch all requests" });
   }
 };
-const getAllRequestWithStatus=async(req,res)=>{
+const getAllRequestWithStatus = async (req, res) => {
   try {
-    const pendingRequests = await Request.find({ status: "Pending" }); 
-    const accepctedRequests = await Request.find({ status: "Accepted" }); 
+    const pendingRequests = await Request.find({ status: "Pending" });
+    const accepctedRequests = await Request.find({ status: "Accepted" });
     const rejectedRequests = await Request.find({ status: "Rejected" });
-    return res.status(200).json({ success: true, pendingRequests:pendingRequests.length,accepctedRequests:accepctedRequests.length, rejectedRequests:rejectedRequests.length});
+    return res
+      .status(200)
+      .json({
+        success: true,
+        pendingRequests: pendingRequests.length,
+        accepctedRequests: accepctedRequests.length,
+        rejectedRequests: rejectedRequests.length,
+      });
   } catch (error) {
     console.error(error);
 
@@ -265,15 +272,78 @@ const getAllRequestWithStatus=async(req,res)=>{
       .status(500)
       .json({ success: false, message: "Failed to fetch pending requests" });
   }
-}
+};
+const getTopBookedCollectorsController = async (req, res) => {
+  try {
+    const topCollectors = await Request.aggregate([
+      // Group by collectorId and count the number of requests for each collector
+      {
+        $group: {
+          _id: "$collectorId",
+          count: { $sum: 1 }, // Count requests per collector
+        },
+      },
+      // Sort the collectors based on the count in descending order
+      { $sort: { count: -1 } },
+      // Limit the result to 5 to get the top 5 most booked collectors
+      { $limit: 5 },
+    ]);
+
+    // Assuming you have a Collector model imported
+    const collectorsInfo = await Promise.all(
+      topCollectors.map(async (collector) => {
+        const collectorInfo = await Collector.findById(collector._id);
+        return {
+          collectorId: collector._id,
+          count: collector.count,
+          collectorInfo, // Additional collector information if needed
+        };
+      })
+    );
+
+    return res.status(200).json({
+      success: true,
+      topBookedCollectors: collectorsInfo,
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({
+      success: false,
+      message: "Error retrieving top booked collectors",
+    });
+  }
+};
+const getTopBookedTestsController = async () => {
+  try {
+    const topBookedTests = await Request.aggregate([
+      { $unwind: '$testids' }, // Unwind the testids array
+      {
+        $group: {
+          _id: '$testids',
+          count: { $sum: 1 }, // Count occurrences of each test ID
+        },
+      },
+      { $sort: { count: -1 } }, // Sort in descending order based on count
+      { $limit: 5 }, // Limit the result to 5
+    ]);
+
+    console.log('Top 5 booked tests:', topBookedTests);
+    return topBookedTests;
+  } catch (error) {
+    console.error('Error retrieving top booked tests:', error);
+    throw error;
+  }
+};
 module.exports = {
   updateRequestStatusController,
   deleteRequestController,
   findPendingRequestController,
-  findAccepctedRequestController,
+  findAcceptedRequestController,
   findRejectedRequestController,
   checkRequestStatusController,
   updatePaymentMethodController,
   getAllRequestController,
-  getAllRequestWithStatus
+  getAllRequestWithStatus,
+  getTopBookedCollectorsController,
+  getTopBookedTestsController
 };

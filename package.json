@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "proxy": "/http://localhost:/1200/",
+  "proxy": "https://main--silly-daifuku-fbbc21.netlify.app/",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js"
@@ -22,6 +22,7 @@
     "express-formidable": "^1.2.0",
     "express-session": "^1.17.3",
     "firebase-admin": "^12.0.0",
+    "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
     "mongoose": "^8.0.3",

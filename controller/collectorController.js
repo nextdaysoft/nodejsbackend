@@ -1,31 +1,41 @@
 const Collector = require("../model/collectorModel");
 const Request = require("../model/requestModel");
-const fs = require("fs");
 const bcrypt = require("bcrypt");
 const { comparePassword, hashPassword } = require("../helper/authHelper");
 const multer = require("multer");
 const jwt =require("jsonwebtoken")
-// Set up multer storage and file naming
+
+//file uploads
+const fs = require('fs');
+const path = require('path');
+const directory = 'uploads';
+// Create the 'uploads' directory if it doesn't exist
+if (!fs.existsSync(directory)) {
+  fs.mkdirSync(directory);
+  console.log(`'${directory}' directory created.`);
+} else {
+  console.log(`'${directory}' directory already exists.`);
+}
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "uploads"); // Specify the directory where images will be stored
+    cb(null, directory);
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname); // Rename file to avoid collisions
+    cb(null, Date.now() + '-' + file.originalname);
   },
 });
 
-// Filter for image files only
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith("image/")) {
+  if (file.mimetype.startsWith('image/')) {
     cb(null, true);
   } else {
-    cb(new Error("Only image files are allowed!"), false);
+    cb(new Error('Only image files are allowed!'), false);
   }
 };
-
-const upload = multer({ storage, fileFilter });
-
+const upload = multer({
+  storage,
+  fileFilter,
+});
 const uploadProfileImage = async (req, res, next) => {
   try {
     upload.single("profileImage")(req, res, async function (err) {
@@ -41,7 +51,7 @@ const uploadProfileImage = async (req, res, next) => {
         return res.status(400).send({ message: "No image uploaded" });
       }
 
-      const imageUrl = `http://localhost:1200/${uploadedFile.filename}`; // Adjust as needed
+      const imageUrl = `https://famous-foal-khakis.cyclic.app/${uploadedFile.filename}`; // Adjust as needed
 
       const { collectorId } = req.params;
       const collector = await Collector.findByIdAndUpdate(

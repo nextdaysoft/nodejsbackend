@@ -90,7 +90,7 @@ const collectorSchema = new mongoose.Schema(
     },
     verificationStatus: {
       type: String,
-      enum: ["Pending", "Accepcted", "Rejected"],
+      enum: ["Pending", "Accepted", "Rejected"],
       default: "Pending",
     },
     fcmToken: {
