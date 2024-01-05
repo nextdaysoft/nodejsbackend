@@ -254,23 +254,74 @@ const getAllRequestController = async (req, res) => {
 };
 const getAllRequestWithStatus = async (req, res) => {
   try {
-    const pendingRequests = await Request.find({ status: "Pending" });
-    const accepctedRequests = await Request.find({ status: "Accepted" });
-    const rejectedRequests = await Request.find({ status: "Rejected" });
-    return res
-      .status(200)
-      .json({
-        success: true,
-        pendingRequests: pendingRequests.length,
-        accepctedRequests: accepctedRequests.length,
-        rejectedRequests: rejectedRequests.length,
-      });
+    const { selectedTimeRange } = req.query;
+
+    let startDate;
+    let endDate;
+
+    // Determine the start date based on the selected time range
+    switch (selectedTimeRange) {
+      case "today":
+        startDate = new Date();
+        startDate.setHours(0, 0, 0, 0);
+        endDate = new Date(startDate); // Set endDate to the same as startDate
+        endDate.setHours(0, 0, 0, 0);
+        console.log(startDate);
+        console.log(endDate);
+        break;
+      case "lastDay":
+        startDate = new Date();
+        startDate.setDate(startDate.getDate() - 1);
+        endDate = new Date(); // Set endDate to the current date and time
+
+        console.log(startDate);
+        console.log(endDate);
+        break;
+      case "lastMonth":
+        startDate = new Date();
+        startDate.setMonth(startDate.getMonth() - 1);
+        endDate = new Date(); // Set endDate to the current date and time
+        break;
+      case "lastQuarter":
+        startDate = new Date();
+        startDate.setMonth(startDate.getMonth() - 3);
+        endDate = new Date(); // Set endDate to the current date and time
+        break;
+      case "lastYear":
+        startDate = new Date();
+        startDate.setFullYear(startDate.getFullYear() - 1);
+        endDate = new Date(); // Set endDate to the current date and time
+        break;
+      default:
+        startDate = new Date(0); // Default start date (Epoch time)
+        endDate = new Date(); // Default end date as current date and time
+        break;
+    }
+    const pendingRequests = await Request.find({
+      status: "Pending",
+      createdAt: { $gte: startDate, $lte: endDate },
+    });
+    const acceptedRequests = await Request.find({
+      status: "Accepted",
+      createdAt: { $gte: startDate, $lte: endDate },
+    });
+    const rejectedRequests = await Request.find({
+      status: "Rejected",
+      createdAt: { $gte: startDate, $lte: endDate },
+    });
+
+    return res.status(200).json({
+      success: true,
+      pendingRequests: pendingRequests.length,
+      acceptedRequests: acceptedRequests.length,
+      rejectedRequests: rejectedRequests.length,
+    });
   } catch (error) {
     console.error(error);
 
     return res
       .status(500)
-      .json({ success: false, message: "Failed to fetch pending requests" });
+      .json({ success: false, message: "Failed to fetch all  requests" });
   }
 };
 const getTopBookedCollectorsController = async (req, res) => {
@@ -313,13 +364,13 @@ const getTopBookedCollectorsController = async (req, res) => {
     });
   }
 };
-const getTopBookedTestsController = async () => {
+const getTopBookedTestsController = async (req, res) => {
   try {
     const topBookedTests = await Request.aggregate([
-      { $unwind: '$testids' }, // Unwind the testids array
+      { $unwind: "$testids" }, // Unwind the testids array
       {
         $group: {
-          _id: '$testids',
+          _id: "$testids",
           count: { $sum: 1 }, // Count occurrences of each test ID
         },
       },
@@ -327,13 +378,53 @@ const getTopBookedTestsController = async () => {
       { $limit: 5 }, // Limit the result to 5
     ]);
 
-    console.log('Top 5 booked tests:', topBookedTests);
-    return topBookedTests;
+    const testIds = topBookedTests.map((test) => test._id); // Extract test IDs from the result
+
+    // Retrieve test names using the extracted test IDs
+    const tests = await Test.find({ _id: { $in: testIds } }, "testName");
+
+    const resultWithNames = topBookedTests.map((test) => {
+      const testName = tests.find((t) => t._id.toString() === test._id.toString()).testName;
+      return { testName, count: test.count };
+    });
+
+    return res.status(200).send({
+      success: true,
+      topBookedTests: resultWithNames,
+    });
   } catch (error) {
-    console.error('Error retrieving top booked tests:', error);
-    throw error;
+    return res.status(500).send({
+      success: false,
+      message: "Error in selecting top tests",
+    });
   }
 };
+const getTotalSalesController = async (req, res) => {
+  try {
+    // Fetch all accepted requests
+    const acceptedRequests = await Request.find({ status: "Accepted" });
+
+    // Calculate total sales from accepted requests
+    let totalSales = 0;
+    acceptedRequests.forEach((request) => {
+      totalSales += request.totalAmount || 0; // Add totalAmount to totalSales
+    });
+
+    return res.status(200).send({
+      succcess: true,
+      totalSales,
+    });
+  } catch (error) {
+    return (
+      res.status(500),
+      send({
+        succcess: false,
+        message: "Error in fetching total sales",
+      })
+    );
+  }
+};
+
 module.exports = {
   updateRequestStatusController,
   deleteRequestController,
@@ -345,5 +436,6 @@ module.exports = {
   getAllRequestController,
   getAllRequestWithStatus,
   getTopBookedCollectorsController,
-  getTopBookedTestsController
+  getTopBookedTestsController,
+  getTotalSalesController,
 };

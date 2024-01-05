@@ -144,6 +144,16 @@ const verifyOtpUserController = async (req, res) => {
     });
   }
 };
+const fs = require('fs');
+const path = require('path');
+const directory = 'uploads';
+// Create the 'uploads' directory if it doesn't exist
+if (!fs.existsSync(directory)) {
+  fs.mkdirSync(directory);
+  console.log(`'${directory}' directory created.`);
+} else {
+  console.log(`'${directory}' directory already exists.`);
+}
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, "uploads"); // Specify the directory where images will be stored
@@ -179,7 +189,7 @@ const uploadProfileImage = async (req, res, next) => {
         return res.status(400).send({ message: "No image uploaded" });
       }
 
-      const imageUrl = `http://localhost:1200/uploads/${uploadedFile.filename}`; // Adjust as needed
+      const imageUrl = `https://famous-foal-khakis.cyclic.app/${uploadedFile.filename}`; // Adjust as needed
 
       const { userId } = req.params;
       const user = await User.findByIdAndUpdate(

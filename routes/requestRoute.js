@@ -10,7 +10,9 @@ const {
   updatePaymentMethodController,
   getAllRequestController,
   getAllRequestWithStatus,
-  getTopBookedCollectorsController
+  getTopBookedCollectorsController,
+  getTotalSalesController,
+  getTopBookedTestsController
 } = require("../controller/requestController");
 
 /**
@@ -766,5 +768,7 @@ router.get("/request-status/:requestId", checkRequestStatusController);
  */
 
 router.get("/getTopBookedCollectors", getTopBookedCollectorsController);
+router.get("/getTopBookedTests",getTopBookedTestsController)
+router.get("/getTotalSales", getTotalSalesController);
 
 module.exports = router;

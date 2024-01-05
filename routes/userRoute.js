@@ -254,6 +254,85 @@ router.put(
   "/update-notificationStatus/:userId",
   updateNotificationStatusController
 );
+/**
+ * @swagger
+ * /api/v1/user/upload-profile-image/{userId}:
+ *   post:
+ *     summary: Upload profile image for a user
+ *     tags:
+ *       - User
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         description: ID of the user to update profile image
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               profileImage:
+ *                 type: string
+ *                 format: binary
+ *                 description: The profile image to upload
+ *     responses:
+ *       '200':
+ *         description: Image uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                   description: Indicates if the operation was successful
+ *                 message:
+ *                   type: string
+ *                   example: Image uploaded successfully
+ *                   description: A success message indicating the image upload was successful
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *                   description: User with updated profile image
+ *       '400':
+ *         description: Bad request - Invalid input, no image uploaded
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: No image uploaded
+ *                   description: Error message for invalid input (no image uploaded)
+ *       '404':
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: User not found
+ *                   description: Error message indicating the user was not found
+ *       '500':
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Error uploading image
+ *                   description: Error message indicating an issue with image upload
+ */
+
 router.post("/upload-profile-image/:userId", uploadProfileImage);
 
 module.exports = router;

@@ -1,8 +1,8 @@
 const Collector = require("../model/collectorModel");
 const User = require("../model/userModel");
-const admin = require('firebase-admin');
-const Admin=require("../model/adminModel")
-const jwt =require('jsonwebtoken')
+const admin = require("firebase-admin");
+const Admin = require("../model/adminModel");
+const jwt = require("jsonwebtoken");
 
 const verifyCollectorController = async (req, res) => {
   try {
@@ -58,10 +58,39 @@ const getAllUsersController = async (req, res) => {
         message: "No users are present",
       });
     } else {
+      //new code for pagination
+      const page = parseInt(req.query.page) || 1; // Get page number from query or default to 1
+      const limit = parseInt(req.query.limit) || 10; // Get number of items per page from query or default to 10
+
+      const startIndex = (page - 1) * limit;
+      const endIndex = page * limit;
+
+      const results = {};
+
+      if (endIndex < users.length) {
+        results.next = {
+          page: page + 1,
+          limit: limit,
+        };
+      }
+
+      if (startIndex > 0) {
+        results.previous = {
+          page: page - 1,
+          limit: limit,
+        };
+      }
+      results.users = users.slice(startIndex, endIndex);
       return res.status(200).send({
-        success: true,
-        users,
+        success:true,
+        results
       });
+
+      ////
+      // return res.status(200).send({
+      //   success: true,
+      //   users,
+      // });
     }
   } catch (error) {
     console.error(error);
@@ -151,12 +180,12 @@ const getAllPendingCollectorsCollectors = async (req, res) => {
   try {
     const pendingCollectors = await Collector.find({
       verificationStatus: "Pending",
-    }).sort({ createdAt: -1 });;
+    }).sort({ createdAt: -1 });
     if (pendingCollectors.length == 0) {
       return res.status(200).send({
         success: false,
         message: "No collectors with pending verification status",
-        pendingCollectors:[]
+        pendingCollectors: [],
       });
     } else {
       return res.status(200).send({
@@ -181,7 +210,7 @@ const getAllRejectedCollectorsCollectors = async (req, res) => {
       return res.status(200).send({
         success: false,
         message: "No collectors with reject verification status",
-        rejectedCollectors:[]
+        rejectedCollectors: [],
       });
     } else {
       return res.status(200).send({
@@ -206,7 +235,7 @@ const getAllAccepctedCollectorsCollectors = async (req, res) => {
       return res.status(200).send({
         success: false,
         message: "No collectors with accepct verification status",
-        accepctedCollectors:[]
+        accepctedCollectors: [],
       });
     } else {
       return res.status(200).send({
@@ -316,7 +345,7 @@ const notificationToAllController = async (req, res) => {
   }
 };
 const notificationToSpecficPersonController = async (req, res) => {
-  const { title, body,fcmToken } = req.body;
+  const { title, body, fcmToken } = req.body;
   try {
     if (!body || !title || !fcmToken) {
       return res.status(400).send({
@@ -327,7 +356,7 @@ const notificationToSpecficPersonController = async (req, res) => {
     const message = {
       data: {
         title,
-        body
+        body,
       },
       token: fcmToken,
     };
@@ -346,7 +375,7 @@ const notificationToSpecficPersonController = async (req, res) => {
     });
   }
 };
-const loginAdminController=async(req,res)=>{
+const loginAdminController = async (req, res) => {
   const { email, password } = req.body;
 
   try {
@@ -354,25 +383,29 @@ const loginAdminController=async(req,res)=>{
     const admin = await Admin.findOne({ email });
 
     if (!admin) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     // Compare the provided password with the hashed password in the database
     const passwordMatch = await bcrypt.compare(password, admin.password);
 
     if (!passwordMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     // Create and return a JWT token upon successful authentication
-    const token = jwt.sign({ email: admin.email, _id: admin._id }, 'your-secret-key', { expiresIn: '7d' });
+    const token = jwt.sign(
+      { email: admin.email, _id: admin._id },
+      "your-secret-key",
+      { expiresIn: "7d" }
+    );
 
     res.status(200).json({ token });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Internal server error' });
+    res.status(500).json({ message: "Internal server error" });
   }
-}
+};
 
 module.exports = {
   getAllUsersController,
@@ -388,5 +421,4 @@ module.exports = {
   notificationToAllController,
   notificationToSpecficPersonController,
   loginAdminController,
-  
 };

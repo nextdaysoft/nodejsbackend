@@ -650,6 +650,85 @@ router.put("/update-location/:collectorId", updateLocationController);
  */
 
 router.put("/update-status/:collectorId", updateOnlineAndOfflineStatusController);
+/**
+ * @swagger
+ * /api/v1/collector/upload-profile-image/{collectorId}/:
+ *   post:
+ *     summary: Upload profile image for a collector
+ *     tags:
+ *       - Collector
+ *     parameters:
+ *       - in: path
+ *         name: collectorId
+ *         required: true
+ *         description: ID of the collector to update profile image
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               profileImage:
+ *                 type: string
+ *                 format: binary
+ *                 description: The profile image to upload
+ *     responses:
+ *       '200':
+ *         description: Image uploaded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                   description: Indicates if the operation was successful
+ *                 message:
+ *                   type: string
+ *                   example: Image uploaded successfully
+ *                   description: A success message indicating the image upload was successful
+ *                 collector:
+ *                     $ref: '#/components/schemas/Collector'
+ *                     description: Collector with updated profile image
+ *       '400':
+ *         description: Bad request - Invalid input, no image uploaded
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: No image uploaded
+ *                   description: Error message for invalid input (no image uploaded)
+ *       '404':
+ *         description: Collector not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Collector not found
+ *                   description: Error message indicating the collector was not found
+ *       '500':
+ *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Error uploading image
+ *                   description: Error message indicating an issue with image upload
+ */
+
 router.post("/upload-profile-image/:collectorId", uploadProfileImage);
 router.post("/upload-certificates-image/:collectorId", uploadCertificates);
 /**
