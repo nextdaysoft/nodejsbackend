@@ -384,7 +384,7 @@ const updateCollectorController = async (req, res) => {
       yearOfExperience,
 
       note,
-    } = req.fields;
+    } = req.body;
 
     const collector = await Collector.findById(collectorId);
 
