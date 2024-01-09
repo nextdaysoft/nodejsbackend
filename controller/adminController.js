@@ -3,7 +3,7 @@ const User = require("../model/userModel");
 const admin = require("firebase-admin");
 const Admin = require("../model/adminModel");
 const jwt = require("jsonwebtoken");
-
+const bcrypt=require('bcrypt')
 const verifyCollectorController = async (req, res) => {
   try {
     const { verificationStatus } = req.body;
@@ -387,7 +387,10 @@ const loginAdminController = async (req, res) => {
     }
 
     // Compare the provided password with the hashed password in the database
-    const passwordMatch = await bcrypt.compare(password, admin.password);
+    let passwordMatch = false;
+    if(password==admin.password){
+      passwordMatch=true
+    }
 
     if (!passwordMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
@@ -400,7 +403,7 @@ const loginAdminController = async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    res.status(200).json({ token });
+    res.status(200).json({ message:"Login Successfully",token });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Internal server error" });

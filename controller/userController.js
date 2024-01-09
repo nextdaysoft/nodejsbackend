@@ -71,37 +71,7 @@ const signupUserController = async (req, res) => {
 
 const verifyOtpUserController = async (req, res) => {
   try {
-    // const { number, otp } = req.body;
-
-    // const otpHolder = await Otp.findOne({ number }).sort({ createdAt: -1 });
-
-    // if (!otpHolder) {
-    //   return res.status(400).send("Expired or Invalid OTP!");
-    // }
-
-    // const validOTP = await bcrypt.compare(otp, otpHolder.otp);
-
-    // if (validOTP) {
-    //   const userExists = await User.findOne({ number });
-
-    //   if (userExists) {
-    //     return res.status(400).send("User already registered!");
-    //   }
-
-    //   const user = new User({ number });
-    //   const token = user.generateJWT();
-    //   const result = await user.save();
-
-    //   await Otp.deleteOne({ _id: otpHolder._id });
-
-    //   return res.status(200).send({
-    //     message: "User Registration Successful!",
-    //     token,
-    //     data: result,
-    //   });
-    // } else {
-    //   return res.status(400).send("Invalid OTP!");
-    // }
+   
     const { number, otp } = req.body;
 
     if (!number || !otp) {
@@ -280,15 +250,12 @@ const deleteUserController = async (req, res) => {
 const createRequestController = async (req, res) => {
   try {
     const { userId, testids, quantities, location, paymentMethod } = req.body;
-
     if (!userId || !testids || !location || !paymentMethod) {
       return res
         .status(400)
         .json({ success: false, message: "Missing required data" });
     }
-
     const { longitude, latitude } = location;
-
     const nearbyCollectors = await Collector.aggregate([
       {
         $geoNear: {
@@ -298,7 +265,7 @@ const createRequestController = async (req, res) => {
           },
           distanceField: "dist.calculated",
           spherical: true,
-          maxDistance: parseFloat(5) * 1000, // Distance in meters (5000km)
+          maxDistance: parseFloat(5) * 1000, // Distance in meters (5km)
         },
       },
       {
@@ -312,7 +279,7 @@ const createRequestController = async (req, res) => {
       },
     ]);
 
-    console.log(nearbyCollectors);
+    //console.log(nearbyCollectors);
 
     if (nearbyCollectors.length === 0) {
       return res.status(404).json({
@@ -336,17 +303,6 @@ const createRequestController = async (req, res) => {
         },
         token: fcmToken,
       };
-
-      // const message = {
-      //   topic: "user",
-      //   data: {
-      //     title: "Check this Mobile (title)",
-      //     body: "Rich Notification testing (body)",
-
-      //     sound: "default",
-      //   },
-      // };
-
       try {
         // Send notification to the collector
         const response = await admin.messaging().send(message);
