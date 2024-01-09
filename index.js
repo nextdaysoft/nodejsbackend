@@ -6,6 +6,7 @@ const dotenv = require("dotenv");
 const connectDB = require("./db/connection");
 const cors = require("cors");
 const cookieSession = require("cookie-session");
+var bodyParser = require('body-parser')
 dotenv.config();
 //firebase
 const { initializeApp, applicationDefault } = require("firebase-admin/app");
@@ -21,6 +22,7 @@ const formidableMiddleware = require("express-formidable");
 const User = require("./model/userModel");
 
 const app = express();
+ 
 
 connectDB();
 app.use(cors())
@@ -51,7 +53,9 @@ const spec = swaggerDoc(options);
 //homeroute root
 app.use("/api-doc", swaggerUi.serve, swaggerUi.setup(spec));
 // app.use(formidableMiddleware());
-app.use(express.json()); // Place express.json() after formidableMiddleware
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
+//app.use(express.json()); // Place express.json() after formidableMiddleware
 app.use("/api/v1/collector", collectorRoute);
 app.use("/api/v1/user", userRoute);
 app.use("/api/v1/test", testRoute);
@@ -68,16 +72,12 @@ app.use(
   cors({
     origin: "*",
   },),
-  
 );
-
 app.use(
   cors({
     methods: ["GET", "POST", "DELETE", "UPDATE", "PUT", "PATCH"],
   })
 );
-
-
 app.use(function(req, res, next) {
   res.setHeader("Content-Type", "application/json");
   next();
@@ -88,19 +88,9 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   projectId: 'bussinessapp-6156a',
 });
-
-
 ////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-
-
-
-
-// ... other app setup
 
 // Configure Google OAuth strategy
 passport.use(
@@ -133,7 +123,6 @@ callbackURL: 'https://bussinessapp-6156a.firebaseapp.com/__/auth/handler/auth/go
   }
 )
 );
-
 // Authenticate middleware
 app.get('/auth/google', passport.authenticate('google'));
 

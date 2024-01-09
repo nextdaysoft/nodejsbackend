@@ -32,14 +32,14 @@ const fileFilter = (req, file, cb) => {
     cb(new Error('Only image files are allowed!'), false);
   }
 };
-// const upload = multer({
-//   storage,
-//   fileFilter,
-// });
 const upload = multer({
-storage: storage,
-limits: { fileSize: 1024 * 1024 * 5 },
-}).single("profileImage");
+  storage,
+  fileFilter,
+});
+// const upload = multer({
+// storage: storage,
+// limits: { fileSize: 1024 * 1024 * 5 },
+// }).single("profileImage");
 const uploadProfileImage = async (req, res, next) => {
   try {
     upload.single("profileImage")(req, res, async function (err) {
@@ -123,7 +123,6 @@ const uploadCertificates = async (req, res, next) => {
 };
 
 const signupCollectorController = async (req, res) => {
-  
   try {
     const {
       fullName,
@@ -132,31 +131,27 @@ const signupCollectorController = async (req, res) => {
       email,
       address,
       password,
-      // confirmPassword,
       gender,
       yearOfExperience,
       selectedTests,
       note,
-      // longitude,
-      // latitude,
       testNames,
-      // fcmToken
     } = req.body;
+
+    console.log(req.body)
+    console.log(req.files)
+    // Ensure required fields are present and valid
+    if (!fullName || !email || !password) {
+      return res.status(400).json({ success: false, message: "Missing required fields" });
+    }
 
     const existingCollector = await Collector.findOne({ email });
     if (existingCollector) {
-      return res.status(400).send({
-        message: "Collector already exists",
-      });
+      return res.status(400).json({ success: false, message: "Collector already exists" });
     }
 
-    // if (password !== confirmPassword) {
-    //   return res.status(400).send({
-    //     message: "Password and Confirm Password do not match",
-    //   });
-    // }
-
-    const hashedPassword = await hashPassword(password); // Hashing the password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     const collector = new Collector({
       fullName,
@@ -165,32 +160,32 @@ const signupCollectorController = async (req, res) => {
       email,
       address,
       password: hashedPassword,
-      // confirmPassword: hashedPassword,
       gender,
       yearOfExperience,
       selectedTests,
       note,
-      // location: {
-      //   coordinates: [longitudeValue, latitudeValue]
-      // },
       testNames,
-      // fcmToken
-      // other fields...
     });
 
+    // Logic to associate uploaded image URLs with the collector
+    const uploadedFiles = req.files;
+    if (!uploadedFiles || uploadedFiles.length === 0) {
+      return res.status(400).json({ success: false, message: "No images uploaded" });
+    }
+
+    const imageUrls = uploadedFiles.map((file) => `http://localhost:1200/uploads/${file.filename}`);
+    collector.certificates = imageUrls.slice(0, 10); 
+
     await collector.save();
-    return res.status(201).send({
+
+    return res.status(201).json({
       success: true,
-      message: "Your documents have been sent to the admin for verification. You will receive a notification once the documents are verified. After verification, you will be able to log in with the account you registered",
+      message: "Your documents have been sent for verification. You'll receive a notification upon verification.",
       collector,
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).send({
-      success: false,
-      error,
-      message: "Error in creating Collector",
-    });
+    return res.status(500).json({ success: false, error, message: "Error creating Collector" });
   }
 };
 
@@ -232,11 +227,7 @@ const loginCollectorController = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Collector logged in successfully",
-      collector: {
-        _id: collector._id,
-        email: collector.email,
-        // Include other necessary collector data here (avoid sensitive data)
-      },
+     collector,
       token
     });
   } catch (error) {
