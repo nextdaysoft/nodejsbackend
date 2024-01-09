@@ -80,7 +80,7 @@ const router = express.Router();
 router.post("/signup", signupUserController); // Assuming this is a GET request for displaying a signup form, adjust as needed
 /**
  * @swagger
- * /verify-otp:
+ * /api/v1/user/signup/verify:
  *    post:
  *      summary: Verify user OTP and register user
  *      tags: [User]
@@ -129,7 +129,7 @@ router.post("/signup", signupUserController); // Assuming this is a GET request 
 router.post("/signup/verify", verifyOtpUserController);
 /**
  * @swagger
- * /update-user/{userId}:
+ * /api/v1/user/update/{userId}:
  *    put:
  *      summary: Update user information
  *      tags: [User]
@@ -204,7 +204,7 @@ router.post("/signup/verify", verifyOtpUserController);
 router.put("/update/:userId", updateUserController);
 /**
  * @swagger
- * /delete-user/{userId}:
+ * /api/v1/user/delete/{userId}:
  *    delete:
  *      summary: Delete a user
  *      tags: [User]
@@ -249,7 +249,177 @@ router.put("/update/:userId", updateUserController);
  */
 
 router.delete("/delete/:userId", deleteUserController);
+/**
+ * @swagger
+ * /api/v1/user/book-test:
+ *   post:
+ *     summary: Create a new test request
+ *     description: Endpoint to create a new test request and send it to nearby collectors
+ *     tags:
+ *       - Requests
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 description: Identifier of the user making the test request
+ *               testids:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: Array of test identifiers to be performed
+ *               quantities:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: Array of quantities corresponding to each test
+ *               location:
+ *                 type: object
+ *                 properties:
+ *                   longitude:
+ *                     type: number
+ *                     format: float
+ *                     description: Longitude coordinate of the location
+ *                   latitude:
+ *                     type: number
+ *                     format: float
+ *                     description: Latitude coordinate of the location
+ *                 description: Object containing the coordinates of the location
+ *               paymentMethod:
+ *                 type: string
+ *                 description: Payment method for the test request
+ *     responses:
+ *       201:
+ *         description: Collector booked successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   description: Indicates if the request was successful or not
+ *                 message:
+ *                   type: string
+ *                   description: Description/message regarding the success
+ *                 collector:
+ *                   type: object
+ *                   description: Details of the booked collector
+ *                 request:
+ *                   type: object
+ *                   description: Details of the created request
+ *       400:
+ *         description: All collectors rejected the request or bad request due to missing data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   description: Indicates if the request failed
+ *                 message:
+ *                   type: string
+ *                   description: Description/message regarding the failure
+ *       404:
+ *         description: No available collector found for selected tests
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   description: Indicates if the request failed due to no available collectors
+ *                 message:
+ *                   type: string
+ *                   description: Description/message regarding the failure
+ *       500:
+ *         description: Error handling for internal server errors
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   description: Indicates if the request failed due to an internal server error
+ *                 message:
+ *                   type: string
+ *                   description: Description/message regarding the failure
+ */
+
 router.post("/book-test", createRequestController);
+/**
+ * @swagger
+ * /api/v1/user/update-notificationStatus/{userId}:
+ *   patch:
+ *     summary: Update notification status for a user
+ *     description: Update the notification status field for a specific user identified by userId
+ *     tags:
+ *       - Users
+ *     parameters:
+ *       - name: userId
+ *         in: path
+ *         required: true
+ *         description: ID of the user to update notification status
+ *         schema:
+ *           type: string
+ *       - name: notificationStatus
+ *         in: body
+ *         description: Object containing the notification status to be updated
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             notificationStatus:
+ *               type: string
+ *               description: Updated notification status for the user
+ *     responses:
+ *       200:
+ *         description: Notification status updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   description: Indicates if the notification status was updated successfully
+ *                 user:
+ *                   $ref: '#/components/schemas/User'
+ *                   description: Updated user object
+ *       404:
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   description: Indicates that the user was not found
+ *                 message:
+ *                   type: string
+ *                   description: Message indicating user not found
+ *       500:
+ *         description: Failed to update notification status due to internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   description: Indicates that updating notification status failed
+ *                 message:
+ *                   type: string
+ *                   description: Message indicating failure to update notification status
+ */
 router.put(
   "/update-notificationStatus/:userId",
   updateNotificationStatusController
