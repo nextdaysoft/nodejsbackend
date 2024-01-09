@@ -256,7 +256,7 @@ router.delete("/delete/:userId", deleteUserController);
  *     summary: Create a new test request
  *     description: Endpoint to create a new test request and send it to nearby collectors
  *     tags:
- *       - Requests
+ *       - User
  *     requestBody:
  *       required: true
  *       content:
@@ -361,7 +361,7 @@ router.post("/book-test", createRequestController);
  *     summary: Update notification status for a user
  *     description: Update the notification status field for a specific user identified by userId
  *     tags:
- *       - Users
+ *       - User
  *     parameters:
  *       - name: userId
  *         in: path
