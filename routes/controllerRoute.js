@@ -316,7 +316,7 @@ router.post("/signup", signupCollectorController);
  *                   example: Error message providing details about the error
  */
 
-router.post("/login",verifyCollectorStatus, loginCollectorController);
+router.post("/login", loginCollectorController);
 /**
  * @swagger
  *  /api/v1/collector/update/{collectorId}:

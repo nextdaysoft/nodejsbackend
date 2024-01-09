@@ -27,7 +27,7 @@ const verifyCollectorStatus = async (req, res, next) => {
     }
 
     if (collector.verificationStatus !== 'Accepted') {
-      return res.status(403).json({ success: false, message: 'Collector verification status is not accepted' });
+      return res.status(403).json({ success: false, message: 'Your request has been successfully submitted to the administration for review. As of the current moment, the documents are pending verification. You will receive a notification once the verification process is complete. Following the successful verification, you will be able to proceed with signing in to your account. Thank you for your patience and cooperation.' });
     }
 
     // If verificationStatus is 'Accepted', proceed to the next middleware or controller

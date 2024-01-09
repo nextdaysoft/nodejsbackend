@@ -11,7 +11,6 @@ const userSchema = Schema(
     },
     number: {
       type: String,
-     
     },
     alternateNumber: {
       type: String,

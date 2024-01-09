@@ -19,6 +19,7 @@ const adminRoute = require("./routes/adminRoute");
 const authRoute = require("./routes/authRoute");
 const formidableMiddleware = require("express-formidable");
 const User = require("./model/userModel");
+
 const app = express();
 
 connectDB();

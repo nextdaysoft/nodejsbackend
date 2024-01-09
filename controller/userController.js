@@ -9,12 +9,16 @@ const Collector = require("../model/collectorModel");
 const Test = require("../model/testModel");
 const admin = require("firebase-admin");
 const multer = require("multer");
+// const accountSid = process.env.TWILIO_ACCOUNT_SID;
+// const authToken = process.env.TWILIO_AUTH_TOKEN;
+const client = require('twilio')("AC96e5f0528ca8885f4aae5dc04f0068cc", "d7f17f02464120b5eaab99c29b8eb071");
+
 
 const signupUserController = async (req, res) => {
   try {
     const { number, fcmToken } = req.body;
-    if (!number || !fcmToken) {
-      return res.status(400).send("Number and FCM token are required.");
+    if (!number) {
+      return res.status(400).send("Number  required.");
     }
 
     const userExists = await User.findOne({ number });
@@ -36,33 +40,29 @@ const signupUserController = async (req, res) => {
     const otp = new Otp({ number, otp: hashedOTP });
     const savedOTP = await otp.save();
     const OTP = generateNumericOTP();
-    const message = {
-      data: {
-        title: "Verification OTP",
-        body: generatedOTP,
-      },
-      token: fcmToken,
-    };
-
-    const response = await admin.messaging().send(message);
-
-    return res.status(200).send({ message: "OTP sent successfully!", generatedOTP });
-    
     // const message = {
     //   data: {
     //     title: "Verification OTP",
-    //     body: OTP,
+    //     body: generatedOTP,
     //   },
     //   token: fcmToken,
     // };
-    // const response = await admin.messaging().send(message);
-    // const otp = new Otp({ number: number, otp: OTP });
-    // const salt = await bcrypt.genSalt(10);
-    // otp.otp = await bcrypt.hash(otp.otp, salt);
-    // const result = await otp.save();
-    // return res.status(200).send({ message: "Otp send successfully!", OTP });
+
+    //const response = await admin.messaging().send(message);
+    //
+    client.messages
+    .create({
+       body: generatedOTP,
+       from: '+12059315108',
+       to: '+918780223356'
+     })
+    .then(message => console.log(message.sid));
+
+    return res
+      .status(200)
+      .send({ message: "OTP sent successfully!", generatedOTP });
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(500).send({
       message: "Internal Server Error",
     });
@@ -71,7 +71,6 @@ const signupUserController = async (req, res) => {
 
 const verifyOtpUserController = async (req, res) => {
   try {
-   
     const { number, otp } = req.body;
 
     if (!number || !otp) {
@@ -114,9 +113,9 @@ const verifyOtpUserController = async (req, res) => {
     });
   }
 };
-const fs = require('fs');
-const path = require('path');
-const directory = 'uploads';
+const fs = require("fs");
+const path = require("path");
+const directory = "uploads";
 // Create the 'uploads' directory if it doesn't exist
 if (!fs.existsSync(directory)) {
   fs.mkdirSync(directory);

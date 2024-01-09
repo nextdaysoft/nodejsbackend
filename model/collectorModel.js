@@ -111,7 +111,7 @@ const collectorSchema = new mongoose.Schema(
     timestamps: true, // Enable timestamps (createdAt, updatedAt)
   }
 );
-//collectorSchema.index({ location: "2dsphere" });
+collectorSchema.index({ location: "2dsphere" });
 const Collector = mongoose.model("Collector", collectorSchema);
 
 module.exports = Collector;

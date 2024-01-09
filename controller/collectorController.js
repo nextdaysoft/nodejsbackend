@@ -32,10 +32,14 @@ const fileFilter = (req, file, cb) => {
     cb(new Error('Only image files are allowed!'), false);
   }
 };
+// const upload = multer({
+//   storage,
+//   fileFilter,
+// });
 const upload = multer({
-  storage,
-  fileFilter,
-});
+storage: storage,
+limits: { fileSize: 1024 * 1024 * 5 },
+}).single("profileImage");
 const uploadProfileImage = async (req, res, next) => {
   try {
     upload.single("profileImage")(req, res, async function (err) {
@@ -119,6 +123,7 @@ const uploadCertificates = async (req, res, next) => {
 };
 
 const signupCollectorController = async (req, res) => {
+  
   try {
     const {
       fullName,
@@ -127,15 +132,15 @@ const signupCollectorController = async (req, res) => {
       email,
       address,
       password,
-      confirmPassword,
+      // confirmPassword,
       gender,
       yearOfExperience,
       selectedTests,
       note,
-      longitude,
-      latitude,
+      // longitude,
+      // latitude,
       testNames,
-      fcmToken
+      // fcmToken
     } = req.body;
 
     const existingCollector = await Collector.findOne({ email });
@@ -145,11 +150,11 @@ const signupCollectorController = async (req, res) => {
       });
     }
 
-    if (password !== confirmPassword) {
-      return res.status(400).send({
-        message: "Password and Confirm Password do not match",
-      });
-    }
+    // if (password !== confirmPassword) {
+    //   return res.status(400).send({
+    //     message: "Password and Confirm Password do not match",
+    //   });
+    // }
 
     const hashedPassword = await hashPassword(password); // Hashing the password
 
@@ -160,24 +165,23 @@ const signupCollectorController = async (req, res) => {
       email,
       address,
       password: hashedPassword,
-      confirmPassword: hashedPassword,
+      // confirmPassword: hashedPassword,
       gender,
       yearOfExperience,
       selectedTests,
       note,
-      location: {
-        type: "Point",
-        coordinates: [parseFloat(longitude), parseFloat(latitude)],
-      },
+      // location: {
+      //   coordinates: [longitudeValue, latitudeValue]
+      // },
       testNames,
-      fcmToken
+      // fcmToken
       // other fields...
     });
 
     await collector.save();
     return res.status(201).send({
       success: true,
-      message: "Collector Created Successfully",
+      message: "Your documents have been sent to the admin for verification. You will receive a notification once the documents are verified. After verification, you will be able to log in with the account you registered",
       collector,
     });
   } catch (error) {
