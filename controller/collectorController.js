@@ -3,12 +3,12 @@ const Request = require("../model/requestModel");
 const bcrypt = require("bcrypt");
 const { comparePassword, hashPassword } = require("../helper/authHelper");
 const multer = require("multer");
-const jwt =require("jsonwebtoken")
+const jwt = require("jsonwebtoken");
 
 //file uploads
-const fs = require('fs');
-const path = require('path');
-const directory = 'uploads';
+const fs = require("fs");
+const path = require("path");
+const directory = "uploads";
 // Create the 'uploads' directory if it doesn't exist
 if (!fs.existsSync(directory)) {
   fs.mkdirSync(directory);
@@ -21,15 +21,15 @@ const storage = multer.diskStorage({
     cb(null, directory);
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
+    cb(null, Date.now() + "-" + file.originalname);
   },
 });
 
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith('image/')) {
+  if (file.mimetype.startsWith("image/")) {
     cb(null, true);
   } else {
-    cb(new Error('Only image files are allowed!'), false);
+    cb(new Error("Only image files are allowed!"), false);
   }
 };
 const upload = multer({
@@ -136,18 +136,20 @@ const signupCollectorController = async (req, res) => {
       selectedTests,
       note,
       testNames,
-    } = req.body;
+    } = req.fields;
 
-    console.log(req.body)
-    console.log(req.files)
     // Ensure required fields are present and valid
     if (!fullName || !email || !password) {
-      return res.status(400).json({ success: false, message: "Missing required fields" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing required fields" });
     }
 
     const existingCollector = await Collector.findOne({ email });
     if (existingCollector) {
-      return res.status(400).json({ success: false, message: "Collector already exists" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Collector already exists" });
     }
 
     const saltRounds = 10;
@@ -167,28 +169,152 @@ const signupCollectorController = async (req, res) => {
       testNames,
     });
 
-    // Logic to associate uploaded image URLs with the collector
-    const uploadedFiles = req.files;
-    if (!uploadedFiles || uploadedFiles.length === 0) {
-      return res.status(400).json({ success: false, message: "No images uploaded" });
+    // Access certificates from req.files
+    const { certificates } = req.files;
+
+    // Ensure certificates are present and it's an array
+    if (
+      !certificates ||
+      !Array.isArray(certificates) ||
+      certificates.length === 0
+    ) {
+      return res
+        .status(400)
+        .json({
+          success: false,
+          message: "No images uploaded or invalid format",
+        });
     }
 
-    const imageUrls = uploadedFiles.map((file) => `http://localhost:1200/uploads/${file.filename}`);
-    collector.certificates = imageUrls.slice(0, 10); 
+    const promises = certificates.map(async (certificate) => {
+      // Validation for the size of each certificate
+      if (certificate.size > 1000000) {
+        return res.status(400).json({
+          error: "Each certificate should be less than 1MB in size",
+        });
+      }
+
+      return {
+        data: fs.readFileSync(certificate.path),
+        contentType: certificate.type,
+      };
+    });
+
+    const certificateData = await Promise.all(promises);
+
+    // Push certificate data into collector.certificates array
+    certificateData.forEach((data) => {
+      collector.certificates.push(data);
+    });
 
     await collector.save();
 
     return res.status(201).json({
       success: true,
-      message: "Your documents have been sent for verification. You'll receive a notification upon verification.",
+      message:
+        "Your documents have been sent for verification. You'll receive a notification upon verification.",
       collector,
     });
   } catch (error) {
     console.error(error);
-    return res.status(500).json({ success: false, error, message: "Error creating Collector" });
+    return res
+      .status(500)
+      .json({ success: false, error, message: "Error creating Collector" });
   }
 };
 
+const formidable = require("formidable");
+
+// const signupCollectorController = async (req, res) => {
+//   try {
+//     const form = formidable({ multiples: true });
+//     await form.parse(req, async (err, fields, files) => {
+//       if (err) {
+//         return res.status(500).json({ success: false, error: err.message });
+//       }
+
+//       const {
+//         fullName,
+//         companyName,
+//         phoneNumber,
+//         email,
+//         address,
+//         password,
+//         gender,
+//         yearOfExperience,
+//         selectedTests,
+//         note,
+//         testNames,
+//       } = fields;
+// console.log(fields)
+//       // ... (rest of your field validation and collector creation logic)
+//       // Ensure required fields are present and valid
+//       if (!fullName || !email || !password) {
+//         return res
+//           .status(400)
+//           .json({ success: false, message: "Missing required fields" });
+//       }
+
+//       const existingCollector = await Collector.findOne({ email });
+//       if (existingCollector) {
+//         return res
+//           .status(400)
+//           .json({ success: false, message: "Collector already exists" });
+//       }
+
+//       const saltRounds = 10;
+//       const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+//       const collector = await new Collector({
+//         fullName,
+//         companyName,
+//         phoneNumber,
+//         email,
+//         address,
+//         password: hashedPassword,
+//         gender,
+//         yearOfExperience,
+//         selectedTests,
+//         note,
+//         testNames,
+//       });
+//       // Accessing multiple certificates from Formidable's files object
+//       const certificates = files.certificates;
+
+//       if (!certificates || certificates.length === 0) {
+//         return res
+//           .status(400)
+//           .json({ success: false, message: "No images uploaded" });
+//       }
+
+//       // Processing multiple certificates
+//       collector.certificates = [];
+//       certificates.forEach((certificate) => {
+//         // Validation for the size of each certificate
+//         if (certificate.size > 1000000) {
+//           return res.status(500).send({
+//             error: "Each certificate should be less than 1MB in size",
+//           });
+//         }
+//         collector.certificates.push({
+//           data: fs.readFileSync(certificate.filepath), // Use filepath for Formidable
+//           contentType: certificate.mimetype, // Use mimetype for Formidable
+//         });
+//       });
+//       await collector.save();
+//       return res.status(201).send({
+//         success: true,
+//         message:
+//           "Your documents have been sent for verification. You'll receive a notification upon verification.",
+//         collector,
+//       });
+//     });
+//   } catch (error) {
+//     return res.status(500).send({
+//       error,
+//     });
+//   }
+// };
 const loginCollectorController = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -220,15 +346,19 @@ const loginCollectorController = async (req, res) => {
       });
     }
     //token
-    const token = await jwt.sign({ _id: collector._id }, process.env.JWT_SECRET_KEY, {
-      expiresIn: "7d",
-    });
+    const token = await jwt.sign(
+      { _id: collector._id },
+      process.env.JWT_SECRET_KEY,
+      {
+        expiresIn: "7d",
+      }
+    );
     // Password is valid, collector logged in successfully
     return res.status(200).json({
       success: true,
       message: "Collector logged in successfully",
-     collector,
-      token
+      collector,
+      token,
     });
   } catch (error) {
     console.error(error);
@@ -549,16 +679,15 @@ const recentRequestController = async (req, res) => {
   }
 };
 
-const testController=(req,res)=>{
+const testController = (req, res) => {
   try {
     res.status(200).send({
-      message:"protected route"
-    })
-    
+      message: "protected route",
+    });
   } catch (error) {
-    console.log(error)
+    console.log(error);
   }
-}
+};
 module.exports = {
   signupCollectorController,
   loginCollectorController,
@@ -573,5 +702,5 @@ module.exports = {
   countRejectedRequestsController,
   countAccepctedRequestsController,
   recentRequestController,
-  testController
+  testController,
 };

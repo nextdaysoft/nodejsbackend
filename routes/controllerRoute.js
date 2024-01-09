@@ -15,6 +15,7 @@ const {
   recentRequestController,
   testController
 } = require("../controller/collectorController");
+const  formidable =require("express-formidable");
 const {requireSignIn,verifyCollectorStatus} =require("../middleware/authMiddleware")
 const router = express.Router();
 /**
@@ -223,7 +224,7 @@ const router = express.Router();
  *                   example: Error in creating Collector
  */
 
-router.post("/signup", signupCollectorController);
+router.post("/signup", formidable(),signupCollectorController);
 /**
  * @swagger
  * /api/v1/collectorlogin:
