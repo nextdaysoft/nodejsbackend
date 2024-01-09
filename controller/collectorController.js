@@ -10,32 +10,32 @@ const fs = require("fs");
 const path = require("path");
 const directory = "uploads";
 // Create the 'uploads' directory if it doesn't exist
-if (!fs.existsSync(directory)) {
-  fs.mkdirSync(directory);
-  console.log(`'${directory}' directory created.`);
-} else {
-  console.log(`'${directory}' directory already exists.`);
-}
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, directory);
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
-  },
-});
+// if (!fs.existsSync(directory)) {
+//   fs.mkdirSync(directory);
+//   console.log(`'${directory}' directory created.`);
+// } else {
+//   console.log(`'${directory}' directory already exists.`);
+// }
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, directory);
+//   },
+//   filename: function (req, file, cb) {
+//     cb(null, Date.now() + "-" + file.originalname);
+//   },
+// });
 
-const fileFilter = (req, file, cb) => {
-  if (file.mimetype.startsWith("image/")) {
-    cb(null, true);
-  } else {
-    cb(new Error("Only image files are allowed!"), false);
-  }
-};
-const upload = multer({
-  storage,
-  fileFilter,
-});
+// const fileFilter = (req, file, cb) => {
+//   if (file.mimetype.startsWith("image/")) {
+//     cb(null, true);
+//   } else {
+//     cb(new Error("Only image files are allowed!"), false);
+//   }
+// };
+// const upload = multer({
+//   storage,
+//   fileFilter,
+// });
 // const upload = multer({
 // storage: storage,
 // limits: { fileSize: 1024 * 1024 * 5 },

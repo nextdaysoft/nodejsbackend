@@ -52,7 +52,7 @@ const options = {
 const spec = swaggerDoc(options);
 //homeroute root
 app.use("/api-doc", swaggerUi.serve, swaggerUi.setup(spec));
-app.use(formidableMiddleware());
+//app.use(formidableMiddleware());
 app.use(express.json()); 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
