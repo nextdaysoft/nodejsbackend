@@ -340,7 +340,7 @@ const createRequestController = async (req, res) => {
         setTimeout(async () => {
           try {
             const response = await fetch(
-              `http://localhost:1200/api/v1/request/request-status/${createdRequest._id}`
+              `https://nodejs-app-ddkb.onrender.com/api/v1/request/request-status/${createdRequest._id}`
             ); // Adjust the endpoint path if needed
             const requestData = await response.json();
 
@@ -373,9 +373,9 @@ const createRequestController = async (req, res) => {
             return res.status(500).json({
               success: false,
               message: "Error checking request status",
-            });
+            });                                       
           }
-        }, 60000);
+        }, 120000);
       } catch (error) {
         console.error("Error sending notification:", error);
         return res.status(500).json({

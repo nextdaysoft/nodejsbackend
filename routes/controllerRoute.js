@@ -259,7 +259,9 @@ router.post("/signup", upload.array("certificates", 10), async (req, res) => {
       selectedTests,
       note,
       testNames,
-      profileImage
+      profileImage,
+      longitude,
+      latitude
     } = req.body;
     //console.log(req);
     // Ensure required fields are present and valid
@@ -291,6 +293,8 @@ router.post("/signup", upload.array("certificates", 10), async (req, res) => {
       selectedTests,
       note,
       testNames,
+      longitude,
+      latitude
     });
     const uploadedFiles = req.files;
     if (!uploadedFiles || uploadedFiles.length === 0) {
