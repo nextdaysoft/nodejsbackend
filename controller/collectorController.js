@@ -328,7 +328,7 @@ const loginCollectorController = async (req, res) => {
     const collector = await Collector.findOne({ email });
 
     if (!collector) {
-      return res.status(404).json({
+      return res.status(200).json({
         success: false,
         message: "Email is not registered",
       });
