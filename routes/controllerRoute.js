@@ -298,7 +298,7 @@ router.post("/signup", upload.array("certificates", 10), async (req, res) => {
 
     // Assuming 'collector' is an object where you want to store these files
     const imageUrls = uploadedFiles.map((file) => {
-      return `http://localhost:1200/${file.path}`; // Adjust the URL structure based on your server setup
+      return `https://nodejs-app-ddkb.onrender.com/${file.path}`; // Adjust the URL structure based on your server setup
     });
 
     collector.certificates = imageUrls;
