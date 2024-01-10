@@ -10,32 +10,32 @@ const fs = require("fs");
 const path = require("path");
 const directory = "uploads";
 // Create the 'uploads' directory if it doesn't exist
-// if (!fs.existsSync(directory)) {
-//   fs.mkdirSync(directory);
-//   console.log(`'${directory}' directory created.`);
-// } else {
-//   console.log(`'${directory}' directory already exists.`);
-// }
-// const storage = multer.diskStorage({
-//   destination: function (req, file, cb) {
-//     cb(null, directory);
-//   },
-//   filename: function (req, file, cb) {
-//     cb(null, Date.now() + "-" + file.originalname);
-//   },
-// });
+if (!fs.existsSync(directory)) {
+  fs.mkdirSync(directory);
+  console.log(`'${directory}' directory created.`);
+} else {
+  console.log(`'${directory}' directory already exists.`);
+}
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, directory);
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
 
-// const fileFilter = (req, file, cb) => {
-//   if (file.mimetype.startsWith("image/")) {
-//     cb(null, true);
-//   } else {
-//     cb(new Error("Only image files are allowed!"), false);
-//   }
-// };
-// const upload = multer({
-//   storage,
-//   fileFilter,
-// });
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith("image/")) {
+    cb(null, true);
+  } else {
+    cb(new Error("Only image files are allowed!"), false);
+  }
+};
+const upload = multer({
+  storage,
+  fileFilter,
+});
 // const upload = multer({
 // storage: storage,
 // limits: { fileSize: 1024 * 1024 * 5 },
@@ -122,108 +122,106 @@ const uploadCertificates = async (req, res, next) => {
   }
 };
 
-const signupCollectorController = async (req, res) => {
-  try {
-    const {
-      fullName,
-      companyName,
-      phoneNumber,
-      email,
-      address,
-      password,
-      gender,
-      yearOfExperience,
-      selectedTests,
-      note,
-      testNames,
-    } = req.fields;
+// const signupCollectorController = async (req, res) => {
+//   try {
+//     const {
+//       fullName,
+//       companyName,
+//       phoneNumber,
+//       email,
+//       address,
+//       password,
+//       gender,
+//       yearOfExperience,
+//       selectedTests,
+//       note,
+//       testNames,
+//     } = req.body;
+// console.log(req.body)
+//     // Ensure required fields are present and valid
+//     if (!fullName || !email || !password) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Missing required fields" });
+//     }
 
-    // Ensure required fields are present and valid
-    if (!fullName || !email || !password) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Missing required fields" });
-    }
+//     const existingCollector = await Collector.findOne({ email });
+//     if (existingCollector) {
+//       return res
+//         .status(400)
+//         .json({ success: false, message: "Collector already exists" });
+//     }
 
-    const existingCollector = await Collector.findOne({ email });
-    if (existingCollector) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Collector already exists" });
-    }
+//     const saltRounds = 10;
+//     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+//     const collector = new Collector({
+//       fullName,
+//       companyName,
+//       phoneNumber,
+//       email,
+//       address,
+//       password: hashedPassword,
+//       gender,
+//       yearOfExperience,
+//       selectedTests,
+//       note,
+//       testNames,
+//     });
 
-    const collector = new Collector({
-      fullName,
-      companyName,
-      phoneNumber,
-      email,
-      address,
-      password: hashedPassword,
-      gender,
-      yearOfExperience,
-      selectedTests,
-      note,
-      testNames,
-    });
+//     // Access certificates from req.files
+//     const { certificates } = req.files;
 
-    // Access certificates from req.files
-    const { certificates } = req.files;
+//     // Ensure certificates are present and it's an array
+//     if (
+//       !certificates ||
+//       !Array.isArray(certificates) ||
+//       certificates.length === 0
+//     ) {
+//       return res
+//         .status(400)
+//         .json({
+//           success: false,
+//           message: "No images uploaded or invalid format",
+//         });
+//     }
 
-    // Ensure certificates are present and it's an array
-    if (
-      !certificates ||
-      !Array.isArray(certificates) ||
-      certificates.length === 0
-    ) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "No images uploaded or invalid format",
-        });
-    }
+//     const promises = certificates.map(async (certificate) => {
+//       // Validation for the size of each certificate
+//       if (certificate.size > 1000000) {
+//         return res.status(400).json({
+//           error: "Each certificate should be less than 1MB in size",
+//         });
+//       }
 
-    const promises = certificates.map(async (certificate) => {
-      // Validation for the size of each certificate
-      if (certificate.size > 1000000) {
-        return res.status(400).json({
-          error: "Each certificate should be less than 1MB in size",
-        });
-      }
+//       return {
+//         data: fs.readFileSync(certificate.path),
+//         contentType: certificate.type,
+//       };
+//     });
 
-      return {
-        data: fs.readFileSync(certificate.path),
-        contentType: certificate.type,
-      };
-    });
+//     const certificateData = await Promise.all(promises);
 
-    const certificateData = await Promise.all(promises);
+//     // Push certificate data into collector.certificates array
+//     certificateData.forEach((data) => {
+//       collector.certificates.push(data);
+//     });
 
-    // Push certificate data into collector.certificates array
-    certificateData.forEach((data) => {
-      collector.certificates.push(data);
-    });
+//     await collector.save();
 
-    await collector.save();
-
-    return res.status(201).json({
-      success: true,
-      message:
-        "Your documents have been sent for verification. You'll receive a notification upon verification.",
-      collector,
-    });
-  } catch (error) {
-    console.error(error);
-    return res
-      .status(500)
-      .json({ success: false, error, message: "Error creating Collector" });
-  }
-};
-
-const formidable = require("formidable");
+//     return res.status(201).json({
+//       success: true,
+//       message:
+//         "Your documents have been sent for verification. You'll receive a notification upon verification.",
+//       collector,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return res
+//       .status(500)
+//       .json({ success: false, error, message: "Error creating Collector" });
+//   }
+// };
 
 // const signupCollectorController = async (req, res) => {
 //   try {
@@ -367,6 +365,98 @@ const loginCollectorController = async (req, res) => {
       message: "Error in login Collector",
       error: error.message, // Include the error message for debugging
     });
+  }
+};
+const signupCollectorController = async (req, res) => {
+  try {
+    const {
+      fullName,
+      companyName,
+      phoneNumber,
+      email,
+      address,
+      password,
+      gender,
+      yearOfExperience,
+      selectedTests,
+      note,
+      testNames,
+    } = req.body;
+    //console.log(req);
+    // Ensure required fields are present and valid
+    if (!fullName || !email || !password) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing required fields" });
+    }
+
+    const existingCollector = await Collector.findOne({ email });
+    if (existingCollector) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Collector already exists" });
+    }
+
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    const collector = new Collector({
+      fullName,
+      companyName,
+      phoneNumber,
+      email,
+      address,
+      password: hashedPassword,
+      gender,
+      yearOfExperience,
+      selectedTests,
+      note,
+      testNames,
+    });
+
+   
+    upload.array("certificates", 10)(req, res, async function (err) {
+      // if (err instanceof multer.MulterError) {
+      //   return res.status(400).send({ message: "Multer error" });
+      // } else if (err) {
+      //   console.error("Error during upload:", err);
+      //   return res.status(500).send({ message: "Error during upload" });
+      // }
+
+      const uploadedFiles = req.files;
+      console.log(req.files)
+      if (!uploadedFiles || uploadedFiles.length === 0) {
+        return res.status(400).send({ message: "No images uploaded" });
+      }
+
+      // Assuming 'collector' is an object where you want to store these files
+      const imageUrls = uploadedFiles.map((file) => {
+        return `http://localhost:1200/${file.path}`; // Adjust the URL structure based on your server setup
+      });
+
+      collector.certificates = imageUrls;
+
+      try {
+        await collector.save(); // Wait for the collector data to be saved
+        return res.status(201).json({
+          success: true,
+          message: "Your documents have been sent for verification.",
+          collector,
+        });
+      } catch (saveError) {
+        console.error(saveError);
+        return res.status(500).json({
+          success: false,
+          error: saveError,
+          message: "Error saving Collector data",
+        });
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ success: false, error, message: "Error creating Collector" });
   }
 };
 

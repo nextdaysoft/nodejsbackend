@@ -1,4 +1,6 @@
 const express = require("express");
+const Collector=require('../model/collectorModel')
+const bcrypt=require('bcrypt')
 const {
   signupCollectorController,
   loginCollectorController,
@@ -13,10 +15,14 @@ const {
   countRejectedRequestsController,
   countAccepctedRequestsController,
   recentRequestController,
-  testController
+  testController,
 } = require("../controller/collectorController");
-const  formidable =require("express-formidable");
-const {requireSignIn,verifyCollectorStatus} =require("../middleware/authMiddleware")
+const formidable = require("express-formidable");
+const {
+  requireSignIn,
+  verifyCollectorStatus,
+} = require("../middleware/authMiddleware");
+const mu = require("../middleware/multipleImageUpload"); // Path to your multer middleware
 const router = express.Router();
 /**
  * @swagger
@@ -224,7 +230,100 @@ const router = express.Router();
  *                   example: Error in creating Collector
  */
 
-router.post("/signup", formidable(),signupCollectorController);
+// router.post("/signup", multipleImageUpload,signupCollectorController);
+const multer = require("multer");
+
+// Set storage and file handling options for Multer
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/"); // Set the destination folder where uploaded files will be stored
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname); // Set the filename (can be customized as per your requirement)
+  },
+});
+
+// Create the Multer instance with configuration
+const upload = multer({ storage: storage });
+router.post("/signup", upload.array("certificates", 10), async (req, res) => {
+  try {
+    const {
+      fullName,
+      companyName,
+      phoneNumber,
+      email,
+      address,
+      password,
+      gender,
+      yearOfExperience,
+      selectedTests,
+      note,
+      testNames,
+    } = req.body;
+    //console.log(req);
+    // Ensure required fields are present and valid
+    if (!fullName || !email || !password) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing required fields" });
+    }
+
+    const existingCollector = await Collector.findOne({ email });
+    if (existingCollector) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Collector already exists" });
+    }
+
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    const collector = new Collector({
+      fullName,
+      companyName,
+      phoneNumber,
+      email,
+      address,
+      password: hashedPassword,
+      gender,
+      yearOfExperience,
+      selectedTests,
+      note,
+      testNames,
+    });
+    const uploadedFiles = req.files;
+    if (!uploadedFiles || uploadedFiles.length === 0) {
+      return res.status(400).send("No files were uploaded.");
+    }
+
+    // Assuming 'collector' is an object where you want to store these files
+    const imageUrls = uploadedFiles.map((file) => {
+      return `http://localhost:1200/${file.path}`; // Adjust the URL structure based on your server setup
+    });
+
+    collector.certificates = imageUrls;
+    try {
+      await collector.save(); // Wait for the collector data to be saved
+      return res.status(201).json({
+        success: true,
+        message: "Your documents have been sent for verification.",
+        collector,
+      });
+    } catch (saveError) {
+      console.error(saveError);
+      return res.status(500).json({
+        success: false,
+        error: saveError,
+        message: "Error saving Collector data",
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ success: false, error, message: "Error creating Collector" });
+  }
+});
 /**
  * @swagger
  * /api/v1/collectorlogin:
@@ -419,7 +518,6 @@ router.post("/login", loginCollectorController);
  *                 example: Error updating collector
  *                 description: Error message indicating the failure to update the collector
  */
-
 
 router.put("/update/:collectorId", updateCollectorController);
 /**
@@ -650,7 +748,10 @@ router.put("/update-location/:collectorId", updateLocationController);
  *                   description: Error message indicating the internal server error
  */
 
-router.put("/update-status/:collectorId", updateOnlineAndOfflineStatusController);
+router.put(
+  "/update-status/:collectorId",
+  updateOnlineAndOfflineStatusController
+);
 /**
  * @swagger
  * /api/v1/collector/upload-profile-image/{collectorId}/:
@@ -800,7 +901,10 @@ router.post("/upload-certificates-image/:collectorId", uploadCertificates);
  *                   description: Error message indicating the failure to get request count
  */
 
-router.get("/getCountForRequest/:collectorId",countRequestsForCollectorController)
+router.get(
+  "/getCountForRequest/:collectorId",
+  countRequestsForCollectorController
+);
 /**
  * @swagger
  * /api/v1/collector/getCountForPendingRequest/{collectorId}:
@@ -865,7 +969,10 @@ router.get("/getCountForRequest/:collectorId",countRequestsForCollectorControlle
  *                   description: Error message indicating the failure to find pending requests
  */
 
-router.get("/getCountForPendingRequest/:collectorId",countPendingRequestsController)
+router.get(
+  "/getCountForPendingRequest/:collectorId",
+  countPendingRequestsController
+);
 /**
  * @swagger
  * /api/v1/collector/getCountForRejectedRequest/{collectorId}:
@@ -930,7 +1037,10 @@ router.get("/getCountForPendingRequest/:collectorId",countPendingRequestsControl
  *                   description: Error message indicating the failure to find rejected requests
  */
 
-router.get("/getCountForRejectedRequest/:collectorId",countRejectedRequestsController)
+router.get(
+  "/getCountForRejectedRequest/:collectorId",
+  countRejectedRequestsController
+);
 /**
  * @swagger
  * /api/v1/collector/getCountForAccepctedRequest/{collectorId}:
@@ -995,7 +1105,10 @@ router.get("/getCountForRejectedRequest/:collectorId",countRejectedRequestsContr
  *                   description: Error message indicating the failure to find accepted requests
  */
 
-router.get("/getCountForAccepctedRequest/:collectorId",countAccepctedRequestsController)
+router.get(
+  "/getCountForAccepctedRequest/:collectorId",
+  countAccepctedRequestsController
+);
 /**
  * @swagger
  * /api/v1/collector/recent-request/{collectorId}:
@@ -1058,7 +1171,6 @@ router.get("/getCountForAccepctedRequest/:collectorId",countAccepctedRequestsCon
  *                   description: Error message indicating the failure to find the recent request
  */
 
-router.get("/recent-request/:collectorId",recentRequestController)
-
+router.get("/recent-request/:collectorId", recentRequestController);
 
 module.exports = router;

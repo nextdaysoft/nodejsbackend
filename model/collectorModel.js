@@ -4,8 +4,7 @@ const mongoose = require("mongoose");
 const collectorSchema = new mongoose.Schema(
   {
     profileImage: {
-      data: Buffer, // Store image data as a Buffer
-      contentType: String, // Store the image content type
+      type: String,
     },
     certificates: [{
       type: String, // Store image URLs as strings

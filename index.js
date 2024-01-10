@@ -54,8 +54,8 @@ const spec = swaggerDoc(options);
 app.use("/api-doc", swaggerUi.serve, swaggerUi.setup(spec));
 //app.use(formidableMiddleware());
 app.use(express.json()); 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: true}));
+// app.use(bodyParser.json());
+// app.use(bodyParser.urlencoded({extended: true}));
 // Place express.json() after formidableMiddleware
 app.use("/api/v1/collector", collectorRoute);
 app.use("/api/v1/user", userRoute);
