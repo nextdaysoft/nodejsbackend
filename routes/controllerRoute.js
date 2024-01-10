@@ -520,7 +520,67 @@ router.post("/login", loginCollectorController);
  *                 description: Error message indicating the failure to update the collector
  */
 
-router.put("/update/:collectorId", updateCollectorController);
+router.put("/update/:collectorId",upload.single("profileImage") ,async(req,res)=>{
+  try {
+    const { collectorId } = req.params; // Assuming 'id' is the identifier of the collector
+
+    const {
+      fullName,
+      companyName,
+      phoneNumber,
+      email,
+      address,
+      gender,
+      yearOfExperience,
+
+      note,
+    } = req.body;
+
+    const collector = await Collector.findById(collectorId);
+
+    if (!collector) {
+      return res.status(404).send({
+        success: false,
+        message: "Collector not found",
+      });
+    }
+
+    // Update collector fields
+    collector.fullName = fullName || collector.fullName;
+    collector.companyName = companyName || collector.companyName;
+    collector.phoneNumber = phoneNumber || collector.phoneNumber;
+    collector.email = email || collector.email;
+    collector.address = address || collector.address;
+    collector.gender = gender || collector.gender;
+    collector.yearOfExperience = yearOfExperience || collector.yearOfExperience;
+    collector.note = note || collector.note;
+    const uploadedFile = req.file;
+    console.log(uploadedFile)
+    if (!uploadedFile ) {
+      return res.status(400).send("No files were uploaded.");
+    }
+    // const imageUrls = uploadedFiles.map((file) => {
+    //   return `https://nodejs-app-ddkb.onrender.com/${file.path}`; // Adjust the URL structure based on your server setup
+    // });
+    const imageUrl=`https://nodejs-app-ddkb.onrender.com/${uploadedFile.path}`
+    collector.profileImage = imageUrl;
+
+    await collector.save();
+
+    res.status(200).send({
+      success: true,
+      message: "Collector updated successfully",
+      collector,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      error,
+      message: "Error updating collector",
+    });
+  }
+});
 /**
  * @swagger
  * /api/v1/collector/delete/{collectorId}:

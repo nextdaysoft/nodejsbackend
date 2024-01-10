@@ -49,8 +49,7 @@ const userSchema = Schema(
       type: String,
     },
     profileImage: {
-      data: Buffer, // Store image data as a Buffer
-      contentType: String, // Store the image content type
+     type:String
     },
     fcmToken: {
       type: String,

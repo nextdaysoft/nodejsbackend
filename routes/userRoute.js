@@ -10,6 +10,7 @@ const {
   updateNotificationStatusController,
   uploadProfileImage,
 } = require("../controller/userController");
+const User=require('../model/userModel')
 const router = express.Router();
 /**
  * @swagger
@@ -125,7 +126,20 @@ router.post("/signup", signupUserController); // Assuming this is a GET request 
  *                type: string
  *                description: Error message (e.g., expired OTP or wrong OTP)
  */
+const multer = require("multer");
 
+// Set storage and file handling options for Multer
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "uploads/"); // Set the destination folder where uploaded files will be stored
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname); // Set the filename (can be customized as per your requirement)
+  },
+});
+
+// Create the Multer instance with configuration
+const upload = multer({ storage: storage });
 router.post("/signup/verify", verifyOtpUserController);
 /**
  * @swagger
@@ -201,7 +215,47 @@ router.post("/signup/verify", verifyOtpUserController);
  *                    description: Error details
  */
 
-router.put("/update/:userId", updateUserController);
+router.put("/update/:userId", upload.single("profileImage"),async (req,res)=>{
+  try {
+    const { userId } = req.params;
+    const { name, email, number, alternateNumber, note } = req.body;
+    console.log(name);
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).send({
+        success: false,
+        message: "User not found",
+      });
+    }
+    // Update user fields based on request data
+    user.name = name || user.name;
+    user.email = email || user.email;
+    user.number = number || user.number;
+    user.alternateNumber = alternateNumber || user.alternateNumber;
+    user.note = note || user.note;
+    const uploadedFile = req.file;
+    if (!uploadedFile ) {
+      return res.status(400).send("No files were uploaded.");
+    }
+    const imageUrl=`https://nodejs-app-ddkb.onrender.com/${uploadedFile.path}`
+    user.profileImage = imageUrl;
+
+    await user.save();
+
+    res.status(200).send({
+      success: true,
+      message: "User updated successfully",
+      user,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).send({
+      success: false,
+      error: error.message,
+      message: "Error updating user",
+    });
+  }
+});
 /**
  * @swagger
  * /api/v1/user/delete/{userId}:
