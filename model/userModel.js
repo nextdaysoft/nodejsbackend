@@ -86,13 +86,13 @@ userSchema.index({ location: "2dsphere" });
 const User = model("User", userSchema); // Define the User model
 
 // Drop a single index by name on the 'email' field
-User.collection.dropIndex("email_1", function (err, result) {
-  if (err) {
-    console.error("Error dropping index:", err);
-  } else {
-    console.log("Index dropped successfully:", result);
-  }
-});
+// User.collection.dropIndex("email_1", function (err, result) {
+//   if (err) {
+//     console.error("Error dropping index:", err);
+//   } else {
+//     console.log("Index dropped successfully:", result);
+//   }
+// });
 
 
 module.exports = User; // Export the User model

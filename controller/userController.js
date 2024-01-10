@@ -13,16 +13,77 @@ const multer = require("multer");
 // const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = require("twilio")(
   "AC96e5f0528ca8885f4aae5dc04f0068cc",
-  "d7f17f02464120b5eaab99c29b8eb071"
+  "de0be1d8d48067bc6de42cfba972745b"
 );
 
+// const signupUserController = async (req, res) => {
+//   try {
+//     const { number, fcmToken, email, loginType } = req.body;
+//     // if (!number) {
+//     //   return res.status(400).send("Number  required.");
+//     // }
+//     if(number){
+//       function generateNumericOTP() {
+//         const OTP_LENGTH = 6;
+//         let OTP = "";
+//         for (let i = 0; i < OTP_LENGTH; i++) {
+//           OTP += Math.floor(Math.random() * 10); // Generates a random digit (0-9) and appends it to OTP
+//         }
+//         return OTP;
+//       }
+//       const generatedOTP = generateNumericOTP();
+//       const hashedOTP = await bcrypt.hash(generatedOTP, 10);
+  
+//       const otp = new Otp({ number, otp: hashedOTP });
+//       const savedOTP = await otp.save();
+//       const OTP = generateNumericOTP();
+//       client.messages
+//         .create({
+//           body: generatedOTP,
+//           from: "+12059315108",
+//           to: "+918780223356",
+//         })
+//         .then((message) => console.log(message.sid));
+//       const userExists = await User.findOne({ number });
+//       if (userExists) {
+//         return res
+//           .status(400)
+//           .send({ success: true, message: "User already registered!" });
+//       }
+  
+//       return res
+//         .status(200)
+//         .send({ message: "OTP sent successfully!", generatedOTP });
+//     }
+//     if(email){
+//       const userExists = await User.findOne({ email });
+//       if (userExists) {
+//         return res
+//           .status(400)
+//           .send({ success: true, message: "User already registered!" });
+//       }
+//       const newUser = new User({ email });
+//       res.status(200).send({
+//         success:true,
+//         message:"User Created",
+//         userExists
+//       })
+
+//     }
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).send({
+//       success: false,
+//       message: "Internal Server Error",
+//     });
+//   }
+// };
 const signupUserController = async (req, res) => {
   try {
     const { number, fcmToken, email, loginType } = req.body;
-    // if (!number) {
-    //   return res.status(400).send("Number  required.");
-    // }
-    if(number){
+
+    if (number) {
+      // If a number is provided, generate and store an OTP
       function generateNumericOTP() {
         const OTP_LENGTH = 6;
         let OTP = "";
@@ -31,54 +92,46 @@ const signupUserController = async (req, res) => {
         }
         return OTP;
       }
+
       const generatedOTP = generateNumericOTP();
       const hashedOTP = await bcrypt.hash(generatedOTP, 10);
-  
+
       const otp = new Otp({ number, otp: hashedOTP });
       const savedOTP = await otp.save();
-      const OTP = generateNumericOTP();
+
+      // Sending OTP via Twilio SMS
       client.messages
         .create({
           body: generatedOTP,
           from: "+12059315108",
-          to: "+918780223356",
+          to: "+918780223356", // Replace with the provided user number
         })
         .then((message) => console.log(message.sid));
-      const userExists = await User.findOne({ number });
-      if (userExists) {
-        return res
-          .status(400)
-          .send({ success: true, message: "User already registered!" });
-      }
-  
-      return res
-        .status(200)
-        .send({ message: "OTP sent successfully!", generatedOTP });
-    }
-    if(email){
-      const userExists = await User.findOne({ email });
-      if (userExists) {
-        return res
-          .status(400)
-          .send({ success: true, message: "User already registered!" });
-      }
-      const newUser = new User({ email });
-      res.status(200).send({
-        success:true,
-        message:"User Created",
-        userExists
-      })
 
+      return res.status(200).send({ message: "OTP sent successfully!",generatedOTP });
     }
+
+    if (email) {
+      // If an email is provided, check if the user exists and create a new user if not
+      const userExists = await User.findOne({ email });
+
+      if (userExists) {
+        return res.status(400).send({ success: false, message: "User already registered!" });
+      }
+
+      const newUser = new User({ email });
+      await newUser.save();
+
+      return res.status(200).send({ success: true, message: "User Created" });
+    }
+
+    // If neither number nor email is provided
+    return res.status(400).send({ success: false, message: "Number or email required." });
   } catch (error) {
-    console.log(error);
-    res.status(500).send({
-      success: false,
-      message: "Internal Server Error",
-    });
+    console.error(error);
+    return res.status(500).send({ success: false, message: "Internal Server Error" });
   }
 };
-
 const verifyOtpUserController = async (req, res) => {
   try {
     const { number, otp } = req.body;
