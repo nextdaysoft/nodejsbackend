@@ -259,6 +259,7 @@ router.post("/signup", upload.array("certificates", 10), async (req, res) => {
       selectedTests,
       note,
       testNames,
+      profileImage
     } = req.body;
     //console.log(req);
     // Ensure required fields are present and valid

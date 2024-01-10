@@ -11,59 +11,69 @@ const admin = require("firebase-admin");
 const multer = require("multer");
 // const accountSid = process.env.TWILIO_ACCOUNT_SID;
 // const authToken = process.env.TWILIO_AUTH_TOKEN;
-const client = require('twilio')("AC96e5f0528ca8885f4aae5dc04f0068cc", "d7f17f02464120b5eaab99c29b8eb071");
-
+const client = require("twilio")(
+  "AC96e5f0528ca8885f4aae5dc04f0068cc",
+  "d7f17f02464120b5eaab99c29b8eb071"
+);
 
 const signupUserController = async (req, res) => {
   try {
-    const { number, fcmToken } = req.body;
-    if (!number) {
-      return res.status(400).send("Number  required.");
-    }
-
-    const userExists = await User.findOne({ number });
-    if (userExists) {
-      return res.status(400).send("User already registered!");
-    }
-
-    function generateNumericOTP() {
-      const OTP_LENGTH = 6;
-      let OTP = "";
-      for (let i = 0; i < OTP_LENGTH; i++) {
-        OTP += Math.floor(Math.random() * 10); // Generates a random digit (0-9) and appends it to OTP
+    const { number, fcmToken, email, loginType } = req.body;
+    // if (!number) {
+    //   return res.status(400).send("Number  required.");
+    // }
+    if(number){
+      function generateNumericOTP() {
+        const OTP_LENGTH = 6;
+        let OTP = "";
+        for (let i = 0; i < OTP_LENGTH; i++) {
+          OTP += Math.floor(Math.random() * 10); // Generates a random digit (0-9) and appends it to OTP
+        }
+        return OTP;
       }
-      return OTP;
+      const generatedOTP = generateNumericOTP();
+      const hashedOTP = await bcrypt.hash(generatedOTP, 10);
+  
+      const otp = new Otp({ number, otp: hashedOTP });
+      const savedOTP = await otp.save();
+      const OTP = generateNumericOTP();
+      client.messages
+        .create({
+          body: generatedOTP,
+          from: "+12059315108",
+          to: "+918780223356",
+        })
+        .then((message) => console.log(message.sid));
+      const userExists = await User.findOne({ number });
+      if (userExists) {
+        return res
+          .status(400)
+          .send({ success: true, message: "User already registered!" });
+      }
+  
+      return res
+        .status(200)
+        .send({ message: "OTP sent successfully!", generatedOTP });
     }
-    const generatedOTP = generateNumericOTP();
-    const hashedOTP = await bcrypt.hash(generatedOTP, 10);
+    if(email){
+      const userExists = await User.findOne({ email });
+      if (userExists) {
+        return res
+          .status(400)
+          .send({ success: true, message: "User already registered!" });
+      }
+      const newUser = new User({ email });
+      res.status(200).send({
+        success:true,
+        message:"User Created",
+        userExists
+      })
 
-    const otp = new Otp({ number, otp: hashedOTP });
-    const savedOTP = await otp.save();
-    const OTP = generateNumericOTP();
-    // const message = {
-    //   data: {
-    //     title: "Verification OTP",
-    //     body: generatedOTP,
-    //   },
-    //   token: fcmToken,
-    // };
-
-    //const response = await admin.messaging().send(message);
-    //
-    client.messages
-    .create({
-       body: generatedOTP,
-       from: '+12059315108',
-       to: '+918780223356'
-     })
-    .then(message => console.log(message.sid));
-
-    return res
-      .status(200)
-      .send({ message: "OTP sent successfully!", generatedOTP });
+    }
   } catch (error) {
     console.log(error);
     res.status(500).send({
+      success: false,
       message: "Internal Server Error",
     });
   }
@@ -72,27 +82,27 @@ const signupUserController = async (req, res) => {
 const verifyOtpUserController = async (req, res) => {
   try {
     const { number, otp } = req.body;
-
     if (!number || !otp) {
       return res.status(400).send("Number and OTP are required.");
     }
-
     const latestOTP = await Otp.findOne({ number }).sort({ createdAt: -1 });
-
     if (!latestOTP) {
       return res.status(400).send("Expired or Invalid OTP!");
     }
-
     const validOTP = await bcrypt.compare(otp, latestOTP.otp);
-
     if (!validOTP) {
       return res.status(400).send("Invalid OTP!");
     }
-
     const userExists = await User.findOne({ number });
 
     if (userExists) {
-      return res.status(400).send("User already registered!");
+      return res
+        .status(400)
+        .send({
+          success: true,
+          userExists,
+          message: "User already registered!",
+        });
     }
 
     const newUser = new User({ number });
@@ -102,6 +112,7 @@ const verifyOtpUserController = async (req, res) => {
     await Otp.deleteOne({ _id: latestOTP._id });
 
     return res.status(200).send({
+      success: true,
       message: "User Registration Successful!",
       token,
       data: savedUser,
@@ -109,6 +120,7 @@ const verifyOtpUserController = async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).send({
+      success: false,
       message: "Internal Server Error",
     });
   }
