@@ -528,6 +528,7 @@ router.put("/update/:collectorId",upload.single("profileImage") ,async(req,res)=
   try {
     const { collectorId } = req.params; // Assuming 'id' is the identifier of the collector
 
+    console.log(req)
     const {
       fullName,
       companyName,
@@ -558,7 +559,7 @@ router.put("/update/:collectorId",upload.single("profileImage") ,async(req,res)=
     collector.yearOfExperience = yearOfExperience || collector.yearOfExperience;
     collector.note = note || collector.note;
     const uploadedFile = req.file;
-    console.log(uploadedFile)
+   // console.log(uploadedFile)
     if (!uploadedFile ) {
       return res.status(400).send("No files were uploaded.");
     }
