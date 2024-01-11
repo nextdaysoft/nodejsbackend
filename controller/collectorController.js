@@ -354,7 +354,7 @@ const loginCollectorController = async (req, res) => {
     // Password is valid, collector logged in successfully
     return res.status(200).json({
       success: true,
-      message: "Collector logged in successfully",
+      message: "Your request has been successfully submitted to the administration for review. As of the current moment, the documents are pending verification. You will receive a notification once the verification process is complete. Following the successful verification, you will be able to proceed with signing in to your account. Thank you for your patience and cooperation.",
       collector,
       token,
     });
@@ -440,7 +440,7 @@ const signupCollectorController = async (req, res) => {
         await collector.save(); // Wait for the collector data to be saved
         return res.status(201).json({
           success: true,
-          message: "Your documents have been sent for verification.",
+          message: "Your documents have been sent to the admin for verification. You will receive a notification once the documents are verified. After verification, you will be able to log in with the account you registered.",
           collector,
         });
       } catch (saveError) {
@@ -599,6 +599,10 @@ const updateOnlineAndOfflineStatusController = async (req, res) => {
       });
     }
 
+    const collector=Collector.findById(collectorId);
+    if(collector.isWorking==true){
+      return res.status(200).json({message:"Unable to go offline task pending"})
+    }
     const updatedCollector = await Collector.findByIdAndUpdate(
       collectorId,
       {
