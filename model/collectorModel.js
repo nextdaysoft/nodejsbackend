@@ -46,7 +46,7 @@ const collectorSchema = new mongoose.Schema(
       },
     ],
     yearOfExperience: {
-      type: Number,
+      type: String,
      
     },
     testNames: [

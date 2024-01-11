@@ -536,7 +536,6 @@ router.put("/update/:collectorId",upload.single("profileImage") ,async(req,res)=
       address,
       gender,
       yearOfExperience,
-
       note,
     } = req.body;
 
