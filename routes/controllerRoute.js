@@ -311,7 +311,7 @@ router.post("/signup", upload.array("certificates", 10), async (req, res) => {
       await collector.save(); // Wait for the collector data to be saved
       return res.status(200).json({
         success: true,
-        message: "Your documents have been sent for verification.",
+        message: "Your documents have been sent to the admin for verification. You will receive a notification once the documents are verified. After verification, you will be able to log in with the account you registered.",
         collector,
       });
     } catch (saveError) {
