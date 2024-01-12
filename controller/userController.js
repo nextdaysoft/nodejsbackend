@@ -116,20 +116,20 @@ const signupUserController = async (req, res) => {
       const userExists = await User.findOne({ email });
 
       if (userExists) {
-        return res.status(400).send({ success: false, message: "User already registered!" });
+        return res.status(200).send({ success: true, message: "User already registered!" });
       }
 
       const newUser = new User({ email });
       await newUser.save();
 
-      return res.status(200).send({ success: true, message: "User Created" });
+      return res.status(200).send({ success: true, message: "User Created Successfully" });
     }
 
     // If neither number nor email is provided
     return res.status(400).send({ success: false, message: "Number or email required." });
   } catch (error) {
     console.error(error);
-    return res.status(500).send({ success: false, message: "Internal Server Error" });
+    return res.status(500).send({ success: false, message: "Unable to Connect Try Again Later!" });
   }
 };
 const verifyOtpUserController = async (req, res) => {
@@ -174,7 +174,7 @@ const verifyOtpUserController = async (req, res) => {
     console.error(error);
     return res.status(500).send({
       success: false,
-      message: "Internal Server Error",
+      message: "Unable to Connect Try Again Later!",
     });
   }
 };
