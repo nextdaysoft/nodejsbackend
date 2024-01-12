@@ -150,7 +150,7 @@ const verifyOtpUserController = async (req, res) => {
 
     if (userExists) {
       return res
-        .status(400)
+        .status(200)
         .send({
           success: true,
           userExists,
