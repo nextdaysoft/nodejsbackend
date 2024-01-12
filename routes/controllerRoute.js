@@ -24,6 +24,12 @@ const {
 } = require("../middleware/authMiddleware");
 const mu = require("../middleware/multipleImageUpload"); // Path to your multer middleware
 const router = express.Router();
+const  { initializeApp } =require("firebase/app");
+const {getStorage,ref,getDownloadURL,uploadBytesResumable}=require("firebase/storage")
+const config=require("../config/firebaseConfig")
+initializeApp(config.firebaseConfig)
+const storing=getStorage();
+
 /**
  * @swagger
  * components:
@@ -566,8 +572,15 @@ router.put("/update/:collectorId",upload.single("profileImage") ,async(req,res)=
     // const imageUrls = uploadedFiles.map((file) => {
     //   return `https://nodejs-app-ddkb.onrender.com/${file.path}`; // Adjust the URL structure based on your server setup
     // });
-    const imageUrl=`https://nodejs-app-ddkb.onrender.com/${uploadedFile.path}`
-    collector.profileImage = imageUrl;
+    const dateTime=Date.now();
+    const storageRef=ref(storing,`files/${req.file.originalname}`)
+    const metadata={
+      contentType:req.file.mimetype
+    }
+    const snapshot=await uploadBytesResumable(storageRef,req.file.buffer,metadata);
+    const downloadURL=await getDownloadURL(snapshot.ref)
+    // const imageUrl=`https://nodejs-app-ddkb.onrender.com/${uploadedFile.path}`
+    collector.profileImage = downloadURL;
 
     await collector.save();
 

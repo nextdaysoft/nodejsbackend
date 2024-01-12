@@ -13,7 +13,7 @@ const multer = require("multer");
 // const authToken = process.env.TWILIO_AUTH_TOKEN;
 const client = require("twilio")(
   "AC96e5f0528ca8885f4aae5dc04f0068cc",
-  "de0be1d8d48067bc6de42cfba972745b"
+  "ff86536ba143d6100c7c6ecc7ec2d34d"
 );
 
 // const signupUserController = async (req, res) => {
